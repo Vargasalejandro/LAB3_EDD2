@@ -29,33 +29,67 @@ SERVER_IP_ADDRESS = CONFIG_PARAMS['SERVER_IP_ADDRESS']
 SERVER_PORT = CONFIG_PARAMS['SERVER_PORT']
 EXIT_MESSAGE = CONFIG_PARAMS['EXIT_MESSAGE']
 
-def Mergesort(vector, start_time, time_limit):
+def Mergesort(vector, start, end, start_time, time_limit):
     # Verificar si el tiempo transcurrido ha excedido el límite establecido
-    # Si el tiempo límite se ha superado, se devuelve el vector sin ordenar completamente
     if time.perf_counter() - start_time > time_limit:
-        return vector  # Devuelve el vector parcialmente ordenado si excede el límite de tiempo
+        return  # Detener la ejecución si se supera el tiempo límite
 
     # Caso base
-    if len(vector) <= 1:
-        return vector
+    if start >= end:
+        return
 
-    # Dividir el vector en dos mitades
-    mid = len(vector) // 2  # Se encuentra el índice medio
-    # Recursivamente ordena la mitad izquierda del vector
-    left = Mergesort(vector[:mid], start_time, time_limit)  # Llamada recursiva sobre la mitad izquierda
-    # Recursivamente ordena la mitad derecha del vector.
-    right = Mergesort(vector[mid:], start_time, time_limit)  # Llamada recursiva sobre la mitad derecha
+    # Encontrar el índice medio
+    mid = (start + end) // 2
 
-    # Antes de mezclar las dos mitades ordenadas, verificamos si el tiempo límite ha sido alcanzado
-    # Si el tiempo se ha excedido, se devuelve la mezcla de las dos mitades parcialmente ordenadas
+    # Recursivamente ordenar la mitad izquierda del vector
+    Mergesort(vector, start, mid, start_time, time_limit)
+
+    # Recursivamente ordenar la mitad derecha del vector
+    Mergesort(vector, mid + 1, end, start_time, time_limit)
+
+    # Antes de mezclar, verificar nuevamente si se ha excedido el tiempo límite
     if time.perf_counter() - start_time > time_limit:
-        return left + right  # Devuelve la mezcla de las dos mitades, que aún pueden estar parcialmente ordenadas
+        return
 
-    # Si no se ha excedido el tiempo, se mezclan las dos mitades ordenadas
-    return merge(left, right)
+    # Mezclar las dos mitades ordenadas
+    merge(vector, start, mid, end)
 
-def merge(left, right):
-    # Función auxiliar para mezclar dos listas ordenadas en una lista ordenada
+
+def merge(vector, start, mid, end):
+    # Crear un arreglo auxiliar para la mezcla
+    aux = [0] * (end - start + 1)
+
+    # Inicializar punteros
+    i, j, k = start, mid + 1, 0
+
+    # Comparar y combinar elementos de ambas mitades
+    while i <= mid and j <= end:
+        if vector[i] <= vector[j]:
+            aux[k] = vector[i]
+            i += 1
+        else:
+            aux[k] = vector[j]
+            j += 1
+        k += 1
+
+    # Copiar los elementos restantes de la mitad izquierda
+    while i <= mid:
+        aux[k] = vector[i]
+        i += 1
+        k += 1
+
+    # Copiar los elementos restantes de la mitad derecha
+    while j <= end:
+        aux[k] = vector[j]
+        j += 1
+        k += 1
+
+    # Copiar los elementos del arreglo auxiliar de vuelta al original
+    for k in range(len(aux)):
+        vector[start + k] = aux[k]
+
+def combine(left, right):
+    
     result = []  # Lista que almacenará los elementos de las dos listas combinadas
     
     # Mientras ambas listas (left y right) tengan elementos, compararlas y añadir el menor a result
@@ -86,7 +120,7 @@ def Heapsort(vector, start_time, time_limit):
     for i in range(n // 2 - 1, -1, -1):
         # Verifica si el tiempo ha excedido el límite. Si es así, devuelve el vector parcialmente ordenado
         
-        heapify(vector, n, i, start_time, time_limit)  # Llamada a la función heapify para ajustar el heap
+        heap(vector, n, i, start_time, time_limit)  # Llamada a la función heap para ajustar el heap
         
         if  time.perf_counter() - start_time > time_limit:
             return vector  # Devuelve el vector parcialmente ordenado si se excede el tiempo límite  
@@ -99,14 +133,14 @@ def Heapsort(vector, start_time, time_limit):
         # Intercambia el primer elemento (máximo) con el último elemento del heap
         vector[i], vector[0] = vector[0], vector[i]
 
-        #Usar heapify para asegurarse que el heap sigue siendo válido después del intercambio
-        heapify(vector, i, 0, start_time, time_limit)
+        #Usar heap para asegurarse que el heap sigue siendo válido después del intercambio
+        heap(vector, i, 0, start_time, time_limit)
 
     # Devuelve el vector completamente ordenado (si el tiempo no ha excedido el límite)
     return vector
 
 
-def heapify(arr, n, i, start_time, time_limit):
+def heap(arr, n, i, start_time, time_limit):
     # Inicializa la variable 'largest' como el índice del nodo actual
     largest = i
     left = 2 * i + 1  # Índice del hijo izquierdo
@@ -121,10 +155,10 @@ def heapify(arr, n, i, start_time, time_limit):
         largest = right
 
     
-    # Si largest es diferente del nodo actual, se intercambia el nodo actual con el hijo mayor y llama recursivamente a heapify en el sub-árbol afectado
+    # Si largest es diferente del nodo actual, se intercambia el nodo actual con el hijo mayor y llama recursivamente a heap en el sub-árbol afectado
     if largest != i:
         arr[i], arr[largest] = arr[largest], arr[i]  # Intercambia el nodo con el hijo mayor
-        heapify(arr, n, largest, start_time, time_limit)  # Llama recursivamente a heapify en el sub-árbol afectado
+        heap(arr, n, largest, start_time, time_limit)  # Llama recursivamente a heap en el sub-árbol afectado
 
 
 def Quicksort(vector, start_time, time_limit):
@@ -157,6 +191,8 @@ def Quicksort(vector, start_time, time_limit):
     # Combina las sublistas ordenadas con el pivote en el medio para devolver el vector ordenado
     return left_sorted + [pivot] + right_sorted
 
+
+
 def split_sorted_unsorted(vector):
     #Divide un vector en su parte ordenada y desordenada
     for i in range(1, len(vector)):
@@ -178,7 +214,7 @@ def process_task(task_data):
     #Determinar el algoritmo de procesamiento
     print("Ordenando el vector")
     if algoritmo==1:
-      vector=Mergesort(vector,start_time,time_limit)
+      Mergesort(vector,0,len(vector)-1,start_time,time_limit)
     elif algoritmo==2:
       vector=Heapsort(vector,start_time,time_limit)
     elif algoritmo==3:
@@ -192,12 +228,12 @@ def process_task(task_data):
     vector,unsorted=split_sorted_unsorted(vector)
     #Las dos partes ordenadas se mezclan, la desordenada permanece aparte
     print("Obteniendo la nueva parte ordenada del vector")
-    sorted=merge(sorted,vector)
+    sorted=combine(sorted,vector)
 
     #CHECK
-    #print("sorted:",len(sorted))
-    #print("unsorted:",len(unsorted))
-    
+    print("sorted:",len(sorted))
+    print("unsorted:",len(unsorted))
+
     #Determinar si se complete la tarea 
     if time_taken>time_limit:
       return {"sorted_vector": sorted, "time_taken": time_taken,"completed":False,"unsorted_vector":unsorted,"algoritmo":algoritmo,"time_limit":time_limit}
